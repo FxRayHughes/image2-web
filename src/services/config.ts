@@ -18,11 +18,18 @@ export interface ApiProfile {
   name: string;
   apiUrl: string;
   apiKey: string;
+  generationsPath: string;
+  editsPath: string;
 }
+
+export const DEFAULT_GENERATIONS_PATH = "/v1/images/generations";
+export const DEFAULT_EDITS_PATH = "/v1/images/edits";
 
 export interface AppConfig {
   apiUrl?: string;
   apiKey?: string;
+  generationsPath: string;
+  editsPath: string;
 }
 
 export interface CutoutConfig {
@@ -51,6 +58,8 @@ export function loadProfiles(): ApiProfile[] {
       name: "默认",
       apiUrl: legacy.apiUrl || "",
       apiKey: legacy.apiKey || "",
+      generationsPath: DEFAULT_GENERATIONS_PATH,
+      editsPath: DEFAULT_EDITS_PATH,
     };
     saveProfiles([migrated]);
     setActiveProfileId(migrated.id);
@@ -79,7 +88,11 @@ export function getActiveProfile(): ApiProfile | null {
 
 export function addProfile(name: string, apiUrl: string, apiKey: string): ApiProfile {
   const profiles = loadProfiles();
-  const profile: ApiProfile = { id: generateId(), name, apiUrl, apiKey };
+  const profile: ApiProfile = {
+    id: generateId(), name, apiUrl, apiKey,
+    generationsPath: DEFAULT_GENERATIONS_PATH,
+    editsPath: DEFAULT_EDITS_PATH,
+  };
   profiles.push(profile);
   saveProfiles(profiles);
   return profile;
@@ -105,16 +118,35 @@ export function deleteProfile(id: string): void {
 
 function loadLegacyConfig(): AppConfig {
   try {
-    return JSON.parse(localStorage.getItem(LS_KEY) || "{}");
+    const raw = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
+    return {
+      apiUrl: raw.apiUrl,
+      apiKey: raw.apiKey,
+      generationsPath: DEFAULT_GENERATIONS_PATH,
+      editsPath: DEFAULT_EDITS_PATH,
+    };
   } catch {
-    return {};
+    return {
+      generationsPath: DEFAULT_GENERATIONS_PATH,
+      editsPath: DEFAULT_EDITS_PATH,
+    };
   }
 }
 
 export function loadConfig(): AppConfig {
   const profile = getActiveProfile();
-  if (profile) return { apiUrl: profile.apiUrl, apiKey: profile.apiKey };
-  return loadLegacyConfig();
+  if (profile) return {
+    apiUrl: profile.apiUrl,
+    apiKey: profile.apiKey,
+    generationsPath: profile.generationsPath || DEFAULT_GENERATIONS_PATH,
+    editsPath: profile.editsPath || DEFAULT_EDITS_PATH,
+  };
+  const legacy = loadLegacyConfig();
+  return {
+    ...legacy,
+    generationsPath: DEFAULT_GENERATIONS_PATH,
+    editsPath: DEFAULT_EDITS_PATH,
+  };
 }
 
 export function saveConfig(apiUrl: string, apiKey: string): void {

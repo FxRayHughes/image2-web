@@ -13,7 +13,7 @@ export async function itemToBlob(
     return new Blob([arr], { type: `image/${fallbackFormat || "png"}` });
   }
   if (item.url) {
-    const res = await fetch(item.url);
+    const res = await fetch(item.url, { referrerPolicy: "no-referrer" });
     if (!res.ok) {
       throw new Error(`下载图片失败: HTTP ${res.status}`);
     }
@@ -31,18 +31,17 @@ export interface GenerateParams {
   referenceFiles: File[];
 }
 
-export async function generateImage(
+async function singleRequest(
   params: GenerateParams,
-  onBlob?: (blob: Blob, index: number) => void,
   signal?: AbortSignal,
-): Promise<Blob[]> {
+): Promise<Blob> {
   const cfg = loadConfig();
   if (!cfg.apiUrl || !cfg.apiKey) {
     throw new Error("请先配置 API 地址和密钥");
   }
 
   const hasRefs = params.referenceFiles.length > 0;
-  const endpoint = hasRefs ? "/v1/images/edits" : "/v1/images/generations";
+  const endpoint = hasRefs ? cfg.editsPath : cfg.generationsPath;
   const url = cfg.apiUrl + endpoint;
 
   let res: Response;
@@ -50,19 +49,14 @@ export async function generateImage(
     const fd = new FormData();
     fd.append("model", "gpt-image-2");
     fd.append("prompt", params.prompt);
-    fd.append("n", String(params.n));
+    fd.append("n", "1");
     fd.append("size", params.size);
     fd.append("quality", params.quality);
     fd.append("output_format", params.format);
+    fd.append("response_format", "b64_json");
     const validFiles = params.referenceFiles.filter((file) => {
-      if (file.size === 0) {
-        console.warn("跳过空文件:", file.name);
-        return false;
-      }
-      if (!file.type.startsWith("image/")) {
-        console.warn("跳过非图片文件:", file.name);
-        return false;
-      }
+      if (file.size === 0) return false;
+      if (!file.type.startsWith("image/")) return false;
       return true;
     });
     if (!validFiles.length) {
@@ -88,7 +82,8 @@ export async function generateImage(
         size: params.size,
         quality: params.quality,
         output_format: params.format,
-        n: params.n,
+        response_format: "b64_json",
+        n: 1,
       }),
       signal,
     });
@@ -109,12 +104,41 @@ export async function generateImage(
     throw new Error(data.error?.message || data.message || `HTTP ${res.status}`);
   }
 
-  const blobs: Blob[] = [];
   const items = data.data || [];
-  for (let i = 0; i < items.length; i++) {
-    const blob = await itemToBlob(items[i], params.format);
-    blobs.push(blob);
-    if (onBlob) onBlob(blob, i);
+  if (!items.length) throw new Error("响应中未包含图片数据");
+  return itemToBlob(items[0], params.format);
+}
+
+export async function generateImage(
+  params: GenerateParams,
+  onBlob?: (blob: Blob, index: number) => void,
+  signal?: AbortSignal,
+): Promise<Blob[]> {
+  const count = Math.max(1, params.n);
+  const blobs: Blob[] = new Array(count);
+  let completedCount = 0;
+  let firstError: Error | null = null;
+
+  const promises = Array.from({ length: count }, (_, i) =>
+    singleRequest(params, signal)
+      .then((blob) => {
+        blobs[i] = blob;
+        completedCount++;
+        if (onBlob) onBlob(blob, i);
+      })
+      .catch((err) => {
+        if (!firstError && (err as Error).name !== "AbortError") {
+          firstError = err as Error;
+        }
+        if ((err as Error).name === "AbortError") throw err;
+      }),
+  );
+
+  await Promise.all(promises);
+
+  const results = blobs.filter(Boolean);
+  if (!results.length) {
+    throw firstError || new Error("所有请求均失败");
   }
-  return blobs;
+  return results;
 }

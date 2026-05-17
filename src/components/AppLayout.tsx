@@ -25,7 +25,9 @@ export default function AppLayout() {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const { mode, setMode } = useThemeMode();
 
-  const currentTab = location.pathname.startsWith("/gallery") ? 1 : 0;
+  const tabPaths = ["/generate", "/gallery", "/prompts"];
+  const currentTab = tabPaths.findIndex((p) => location.pathname.startsWith(p));
+  const activeTab = currentTab >= 0 ? currentTab : 0;
 
   function toggleTheme() {
     const next = mode === "dark" ? "light" : "dark";
@@ -49,7 +51,7 @@ export default function AppLayout() {
             sx={{
               fontSize: 16,
               fontWeight: 700,
-              background: "linear-gradient(135deg, #7c3aed, #a78bfa)",
+              background: "linear-gradient(135deg, #6e6e8a, #a0a0b8)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               flexShrink: 0,
@@ -58,12 +60,13 @@ export default function AppLayout() {
             GPT-Image-2
           </Typography>
           <Tabs
-            value={currentTab}
-            onChange={(_, v) => navigate(v === 0 ? "/generate" : "/gallery")}
+            value={activeTab}
+            onChange={(_, v) => navigate(tabPaths[v])}
             sx={{ ml: 2, minHeight: 40, "& .MuiTab-root": { minHeight: 40, py: 0 } }}
           >
             <Tab label="生成" />
             <Tab label="图库" />
+            <Tab label="提示词" />
           </Tabs>
           <Box sx={{ flex: 1 }} />
           <IconButton onClick={toggleTheme} size="small">

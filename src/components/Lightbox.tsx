@@ -42,10 +42,23 @@ export default function Lightbox() {
     >
       <AppBar position="static" sx={{ bgcolor: "transparent" }} elevation={0}>
         <Toolbar>
-          <Typography variant="body2" sx={{ flex: 1 }}>
+          <Typography variant="body2" sx={{ flex: 1, color: "#fff", textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}>
             {hasMultiple ? `${index + 1} / ${urls.length}` : ""}
           </Typography>
-          <IconButton onClick={close} color="inherit"><CloseIcon /></IconButton>
+          <IconButton
+            onClick={close}
+            sx={{
+              bgcolor: "rgba(0,0,0,0.65)",
+              color: "#fff",
+              width: 40,
+              height: 40,
+              border: "1px solid rgba(255,255,255,0.2)",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+              "&:hover": { bgcolor: "rgba(0,0,0,0.85)" },
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
         </Toolbar>
       </AppBar>
       <Box
@@ -78,7 +91,13 @@ export default function Lightbox() {
         {hasMultiple && (
           <IconButton
             onClick={() => goTo((index - 1 + urls.length) % urls.length)}
-            sx={{ position: "absolute", left: 8, zIndex: 1, bgcolor: "rgba(255,255,255,0.1)", "&:hover": { bgcolor: "rgba(255,255,255,0.2)" } }}
+            sx={{
+              position: "absolute", left: 8, zIndex: 1,
+              bgcolor: "rgba(0,0,0,0.65)", color: "#fff",
+              border: "1px solid rgba(255,255,255,0.2)",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+              "&:hover": { bgcolor: "rgba(0,0,0,0.85)" },
+            }}
           >
             <NavigateBeforeIcon />
           </IconButton>
@@ -100,7 +119,13 @@ export default function Lightbox() {
         {hasMultiple && (
           <IconButton
             onClick={() => goTo((index + 1) % urls.length)}
-            sx={{ position: "absolute", right: 8, zIndex: 1, bgcolor: "rgba(255,255,255,0.1)", "&:hover": { bgcolor: "rgba(255,255,255,0.2)" } }}
+            sx={{
+              position: "absolute", right: 8, zIndex: 1,
+              bgcolor: "rgba(0,0,0,0.65)", color: "#fff",
+              border: "1px solid rgba(255,255,255,0.2)",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+              "&:hover": { bgcolor: "rgba(0,0,0,0.85)" },
+            }}
           >
             <NavigateNextIcon />
           </IconButton>

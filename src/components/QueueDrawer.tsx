@@ -3,7 +3,6 @@ import CloseIcon from "@mui/icons-material/Close";
 import ListIcon from "@mui/icons-material/List";
 import { useAppState, useAppDispatch } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
-import { addHistory } from "../services/db";
 import { trackedObjectUrl } from "../services/utils";
 import TaskCard from "./TaskCard";
 
@@ -34,20 +33,6 @@ export default function QueueDrawer() {
   }
 
   async function handleRemoveTask(id: string) {
-    const task = state.tasks.find((t) => t.id === id);
-    if (task && task.status === "done" && task.blobs.length) {
-      await addHistory({
-        time: Date.now(),
-        mode: "generate",
-        prompt: task.prompt,
-        size: task.size,
-        quality: task.quality,
-        format: task.format,
-        n: task.n,
-        blobs: task.blobs,
-      });
-      dispatch({ type: "ADD_PROMPT_TO_HISTORY", text: task.prompt });
-    }
     dispatch({ type: "REMOVE_TASK", id });
   }
 

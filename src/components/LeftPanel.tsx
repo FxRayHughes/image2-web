@@ -104,7 +104,9 @@ export default function LeftPanel() {
 
       const blobs = await generateImage(
         { prompt: task.prompt, size: task.size, quality: task.quality, format: task.format, n: task.n, referenceFiles: normalizedRefs },
-        undefined,
+        (blob) => {
+          dispatch({ type: "UPDATE_TASK", id: task.id, updates: { blobs: [...(state.tasks.find((t) => t.id === task.id)?.blobs || []), blob] } });
+        },
         task.abortController.signal,
       );
 
@@ -119,7 +121,7 @@ export default function LeftPanel() {
       const images = blobs.map((blob) => ({ blob, url: trackedObjectUrl(blob) }));
       dispatch({ type: "SET_CURRENT_RESULT", payload: { images, format: task.format, mode: "generate" } });
 
-      dispatch({ type: "SHOW_TOAST", message: "生成完成，已保存到图库" });
+      dispatch({ type: "SHOW_TOAST", message: `生成完成 · ${blobs.length} 张已保存到图库` });
       navigate("/generate");
     } catch (err) {
       const msg = (err as Error).name === "AbortError" ? "已取消" : (err as Error).message;

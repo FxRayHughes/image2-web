@@ -9,6 +9,7 @@ import { LS_THEME_KEY } from "./services/config";
 import AppLayout from "./components/AppLayout";
 import GeneratePage from "./components/GeneratePage";
 import GalleryPage from "./components/GalleryPage";
+import PromptPage from "./components/PromptPage";
 import Lightbox from "./components/Lightbox";
 
 await openDB();
@@ -36,6 +37,7 @@ function Root() {
               <Route index element={<Navigate to="/generate" replace />} />
               <Route path="generate" element={<GeneratePage />} />
               <Route path="gallery" element={<GalleryPage />} />
+              <Route path="prompts" element={<PromptPage />} />
             </Route>
           </Routes>
         </BrowserRouter>
